@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Bio</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body id="bodyBackground">
+    <div class="container">
+        <h1 id="profileTitle" class="profile-title"></h1>
+        <div class="profile-header" id="profileHeader">
+            <div class="profile-background" id="profileBackground"></div> <!-- Элемент для фона и размытия -->
+            <img src="https://via.placeholder.com/100" alt="Avatar" class="avatar" id="profileAvatar">
+            <h2 id="profileUsername" class="profile-username"></h2>
+            <div class="description" id="profileDescription"></div>
+            <div class="telegram-container">
+                <a href="#" id="telegramLink" class="telegram-icon" target="_blank">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" alt="Telegram Icon" class="telegram-img">
+                </a>
+            </div>
+        </div>
+        <div class="media-player" id="mediaPlayer">
+            <div class="player-box">
+                <div class="track-info">
+                    <span id="trackName">-</span>
+                </div>
+                <div class="player-controls">
+                    <span class="current-time" id="currentTime">00:00</span>
+                    <div class="progress-bar">
+                        <input type="range" id="progressBar" min="0" max="100" value="0">
+                    </div>
+                    <span class="duration" id="duration">00:00</span>
+                    <div class="control-buttons">
+                        <button onclick="skipBackward()" class="control-btn"><i class="fas fa-backward"></i></button>
+                        <button onclick="togglePlay()" class="control-btn play-pause-btn" id="playPauseBtn"><i class="fas fa-play"></i></button>
+                        <button onclick="skipForward()" class="control-btn"><i class="fas fa-forward"></i></button>
+                    </div>
+                </div>
+            </div>
+            <audio id="audioPlayer" style="display: none;"></audio>
+        </div>
+    </div>
+    <!-- Контейнер для частиц -->
+    <canvas id="particlesCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+    <script src="script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+    <script>
+        const audioPlayer = document.getElementById('audioPlayer');
+        const progressBar = document.getElementById('progressBar');
+        const currentTime = document.getElementById('currentTime');
+        const duration = document.getElementById('duration');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+
+        // Загрузка данных из localStorage при загрузке страницы
+        window.onload = function() {
+            loadProfileData();
+            initParticles();
+            typeWriterEffect();
+        };
+
+        // Обновление прогресс-бара и времени
+        audioPlayer.addEventListener('timeupdate', () => {
+            const current = audioPlayer.currentTime;
+            const dur = audioPlayer.duration || 0;
+            const progressPercent = (current / dur) * 100;
+            progressBar.value = progressPercent;
+
+            currentTime.textContent = formatTime(current);
+            duration.textContent = formatTime(dur);
+        });
+
+        // Перемотка при изменении прогресс-бара
+        progressBar.addEventListener('input', () => {
+            const dur = audioPlayer.duration || 0;
+            const newTime = (progressBar.value / 100) * dur;
+            audioPlayer.currentTime = newTime;
+        });
+
+        // Форматирование времени (мм:сс)
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Воспроизведение/пауза
+        function togglePlay() {
+            if (audioPlayer.paused) {
+                audioPlayer.play();
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                audioPlayer.pause();
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+        }
+
+        // Перемотка назад на 10 секунд
+        function skipBackward() {
+            audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 10);
+        }
+
+        // Перемотка вперед на 10 секунд
+        function skipForward() {
+            audioPlayer.currentTime = Math.min(audioPlayer.duration, audioPlayer.currentTime + 10);
+        }
+
+        // Эффект печатной машинки для описания
+        function typeWriterEffect() {
+            const descriptionElement = document.getElementById('profileDescription');
+            const descriptionText = descriptionElement.textContent || '';
+            if (!descriptionText) return;
+
+            let i = 0;
+            let isDeleting = false;
+            let speed = 100;
+
+            function type() {
+                if (!isDeleting && i <= descriptionText.length) {
+                    descriptionElement.textContent = descriptionText.substring(0, i);
+                    i++;
+                    setTimeout(type, speed);
+                } else if (isDeleting && i >= 0) {
+                    descriptionElement.textContent = descriptionText.substring(0, i);
+                    i--;
+                    setTimeout(type, speed / 2);
+                } else if (i > descriptionText.length) {
+                    isDeleting = true;
+                    setTimeout(type, 1000);
+                } else if (i < 0) {
+                    isDeleting = false;
+                    setTimeout(type, 500);
+                }
+            }
+
+            descriptionElement.textContent = '';
+            type();
+        }
+
+        // Частицы, бегающие за курсором (крестики)
+        const cursorParticles = [];
+        let lastParticleTime = 0;
+        const particleInterval = 100;
+
+        document.addEventListener('mousemove', (e) => {
+            const currentTime = Date.now();
+            if (currentTime - lastParticleTime < particleInterval) return;
+
+            lastParticleTime = currentTime;
+            const particle = {
+                x: e.clientX,
+                y: e.clientY,
+                life: 60,
+                speedX: (Math.random() - 0.5) * 4,
+                speedY: (Math.random() - 0.5) * 4,
+            };
+            cursorParticles.push(particle);
+        });
+
+        // Инициализация частиц (фон и курсор)
+        function initParticles() {
+            const canvas = document.getElementById('particlesCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const profileData = JSON.parse(localStorage.getItem('profileData')) || {};
+            const enableParticles = profileData.enableParticles || false;
+            const particleType = profileData.particleType || 'snowflakes';
+
+            const backgroundParticles = [];
+            if (enableParticles) {
+                for (let i = 0; i < 100; i++) {
+                    backgroundParticles.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        size: Math.random() * 5 + 2,
+                        speedY: Math.random() * 2 + 1,
+                    });
+                }
+            }
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (enableParticles) {
+                    backgroundParticles.forEach(p => {
+                        p.y += p.speedY;
+                        if (p.y > canvas.height) p.y = 0;
+
+                        ctx.beginPath();
+                        if (particleType === 'snowflakes') {
+                            ctx.font = `${p.size}px Arial`;
+                            ctx.fillText('❄', p.x, p.y);
+                        } else if (particleType === 'circles') {
+                            ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+                            ctx.fill();
+                        } else if (particleType === 'stars') {
+                            ctx.font = `${p.size}px Arial`;
+                            ctx.fillText('✨', p.x, p.y);
+                        }
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                        ctx.fill();
+                    });
+                }
+
+                for (let i = cursorParticles.length - 1; i >= 0; i--) {
+                    const p = cursorParticles[i];
+                    p.x += p.speedX;
+                    p.y += p.speedY;
+                    p.life--;
+
+                    if (p.life <= 0) {
+                        cursorParticles.splice(i, 1);
+                        continue;
+                    }
+
+                    ctx.font = '12px Arial';
+                    ctx.fillStyle = `rgba(255, 255, 255, ${p.life / 60})`;
+                    ctx.fillText('✖', p.x, p.y);
+                }
+
+                requestAnimationFrame(animateParticles);
+            }
+
+            animateParticles();
+        }
+    </script>
+</body>
+</html>

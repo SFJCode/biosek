@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Settings</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Подключаем EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+</head>
+<body>
+    <!-- Форма логина -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <h3><i class="fas fa-lock"></i> Вход в панель управления</h3>
+            <div class="setting">
+                <label><i class="fas fa-user"></i> Логин</label>
+                <input type="text" id="loginInput" placeholder="Введите логин">
+            </div>
+            <div class="setting">
+                <label><i class="fas fa-key"></i> Пароль</label>
+                <input type="password" id="passwordInput" placeholder="Введите пароль">
+            </div>
+            <button onclick="checkLogin()"><i class="fas fa-sign-in-alt"></i> Войти</button>
+            <p id="loginError" class="error-message" style="display: none;">Неверный логин или пароль!</p>
+            <a href="#" onclick="showForgotPassword()" class="forgot-password">Забыли пароль?</a>
+        </div>
+    </div>
+
+    <!-- Модальное окно для восстановления пароля -->
+    <div class="modal" id="forgotPasswordModal" style="display: none;">
+        <div class="modal-content">
+            <h3><i class="fas fa-key"></i> Восстановление пароля</h3>
+            <div id="step1">
+                <p>Введите ваш логин, чтобы получить код на почту.</p>
+                <div class="setting">
+                    <label><i class="fas fa-user"></i> Логин</label>
+                    <input type="text" id="forgotLoginInput" placeholder="Введите логин">
+                </div>
+                <button onclick="sendResetCode()"><i class="fas fa-envelope"></i> Отправить код</button>
+                <p id="forgotError" class="error-message" style="display: none;"></p>
+            </div>
+            <div id="step2" style="display: none;">
+                <p>Введите код, отправленный на вашу почту, и новый пароль.</p>
+                <div class="setting">
+                    <label><i class="fas fa-code"></i> Код</label>
+                    <input type="text" id="resetCodeInput" placeholder="Введите код">
+                </div>
+                <div class="setting">
+                    <label><i class="fas fa-key"></i> Новый пароль</label>
+                    <input type="password" id="newPasswordInput" placeholder="Введите новый пароль">
+                </div>
+                <button onclick="resetPassword()"><i class="fas fa-check"></i> Сменить пароль</button>
+                <p id="resetError" class="error-message" style="display: none;"></p>
+            </div>
+            <button onclick="closeForgotPassword()" class="close-modal"><i class="fas fa-times"></i> Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Панель управления (скрыта по умолчанию) -->
+    <div class="panel-content" id="panelContent" style="display: none;">
+        <h3><i class="fas fa-cog"></i> Настройки профиля</h3>
+
+        <!-- Assets Uploader -->
+        <div class="panel-section">
+            <h4><i class="fas fa-upload"></i> Assets Uploader</h4>
+            <div class="uploader-grid">
+                <div class="uploader-box">
+                    <label><i class="fas fa-image"></i> Background</label>
+                    <div class="upload-area" onclick="document.getElementById('backgroundInput').click()">
+                        <i class="fas fa-upload upload-icon"></i>
+                        <span>Click to upload a file</span>
+                    </div>
+                    <input type="file" id="backgroundInput" accept="image/*" style="display: none;">
+                </div>
+                <div class="uploader-box">
+                    <label><i class="fas fa-music"></i> Audio</label>
+                    <div class="upload-area" onclick="document.getElementById('audioInput').click()">
+                        <i class="fas fa-upload upload-icon"></i>
+                        <span>Click to upload a file</span>
+                    </div>
+                    <input type="file" id="audioInput" accept="audio/*" style="display: none;">
+                </div>
+                <div class="uploader-box">
+                    <label><i class="fas fa-user-circle"></i> Profile Avatar</label>
+                    <div class="upload-area" onclick="document.getElementById('avatarInput').click()">
+                        <i class="fas fa-upload upload-icon"></i>
+                        <span>Click to upload a file</span>
+                    </div>
+                    <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                </div>
+            </div>
+        </div>
+
+        <!-- General Customization -->
+        <div class="panel-section">
+            <h4><i class="fas fa-sliders-h"></i> General Customization</h4>
+            <div class="setting">
+                <label><i class="fas fa-heading"></i> Title</label>
+                <input type="text" id="titleInput" placeholder="Введите название">
+            </div>
+            <div class="setting">
+                <label><i class="fas fa-user"></i> Username</label>
+                <input type="text" id="nameInput" placeholder="Введите никнейм">
+            </div>
+            <div class="setting">
+                <label><i class="fas fa-align-left"></i> Description</label>
+                <input type="text" id="descriptionInput" placeholder="Введите описание">
+            </div>
+            <div class="setting">
+                <label><i class="fab fa-telegram-plane"></i> Telegram Link</label>
+                <input type="text" id="telegramLinkInput" placeholder="Введите ссылку на Telegram (например, t.me/yourusername)">
+            </div>
+            <div class="setting">
+                <label>Profile Opacity</label>
+                <input type="range" id="profileOpacity" min="0" max="100" value="100">
+            </div>
+            <div class="setting">
+                <label>Profile Blur</label>
+                <input type="range" id="profileBlur" min="0" max="80" value="0">
+            </div>
+        </div>
+
+        <!-- Color Customization -->
+        <div class="panel-section">
+            <h4><i class="fas fa-palette"></i> Color Customization</h4>
+            <div class="setting">
+                <label><i class="fas fa-paint-brush"></i> Accent Color</label>
+                <input type="color" id="accentColor" value="#f39c12">
+            </div>
+            <div class="setting">
+                <label><i class="fas fa-font"></i> Text Color</label>
+                <input type="color" id="textColor" value="#ffffff">
+            </div>
+            <div class="setting">
+                <label><i class="fas fa-fill-drip"></i> Background Color</label>
+                <input type="color" id="backgroundColor" value="#1c2526">
+            </div>
+            <div class="setting">
+                <label><i class="fas fa-border-all"></i> Border Color</label>
+                <input type="color" id="borderColor" value="#ffffff">
+            </div>
+            <div class="setting">
+                <label><i class="fas fa-music"></i> Media Player Background</label>
+                <input type="color" id="mediaPlayerBgColor" value="#4834d4">
+            </div>
+            <div class="setting">
+                <label><i class="fas fa-play-circle"></i> Media Player Buttons Color</label>
+                <input type="color" id="mediaPlayerBtnColor" value="#6c5ce7">
+            </div>
+            <div class="setting">
+                <label><i class="fas fa-sliders-h"></i> Progress Bar Color</label>
+                <input type="color" id="progressBarColor" value="#e84118">
+            </div>
+        </div>
+
+        <!-- Particle Customization -->
+        <div class="panel-section">
+            <h4><i class="fas fa-snowflake"></i> Particle Effects</h4>
+            <div class="setting toggle-setting">
+                <label>Enable Background Particles</label>
+                <label class="switch">
+                    <input type="checkbox" id="enableParticles">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="setting">
+                <label>Particle Type</label>
+                <select id="particleType">
+                    <option value="snowflakes">Snowflakes (❄)</option>
+                    <option value="circles">Circles (●)</option>
+                    <option value="stars">Stars (✨)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Other Customization -->
+        <div class="panel-section">
+            <h4><i class="fas fa-cogs"></i> Other Customization</h4>
+            <div class="setting toggle-setting">
+                <label>Monochrome Icons</label>
+                <label class="switch">
+                    <input type="checkbox" id="monochromeIcons">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="setting toggle-setting">
+                <label>Animated Title</label>
+                <label class="switch">
+                    <input type="checkbox" id="animatedTitle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+
+        <button onclick="updateProfile()"><i class="fas fa-save"></i> Save Changes</button>
+        <a href="/bio.html" class="back-button"><i class="fas fa-arrow-left"></i> Back to Profile</a>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        // Инициализация EmailJS (замените YOUR_USER_ID на ваш User ID из EmailJS)
+        (function(){
+            emailjs.init("gBLwktgiXU-ZHa_FsYthH"); // Вставьте ваш User ID из EmailJS
+        })();
+
+        // Проверка, если пользователь уже вошел
+        window.onload = function() {
+            if (localStorage.getItem('isLoggedIn') === 'true') {
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('panelContent').style.display = 'block';
+                loadProfileData();
+            }
+        };
+
+        function checkLogin() {
+            const login = document.getElementById('loginInput').value;
+            const password = document.getElementById('passwordInput').value;
+            const errorMessage = document.getElementById('loginError');
+            const storedCredentials = JSON.parse(localStorage.getItem('adminCredentials')) || { login: 'aternia', password: '9293Kdgj*4klgsl' };
+
+            if (login === storedCredentials.login && password === storedCredentials.password) {
+                localStorage.setItem('isLoggedIn', 'true');
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('panelContent').style.display = 'block';
+                loadProfileData();
+            } else {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Неверный логин или пароль!';
+            }
+        }
+
+        function showForgotPassword() {
+            document.getElementById('forgotPasswordModal').style.display = 'flex';
+            document.getElementById('step1').style.display = 'block';
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('forgotError').style.display = 'none';
+            document.getElementById('resetError').style.display = 'none';
+        }
+
+        function closeForgotPassword() {
+            document.getElementById('forgotPasswordModal').style.display = 'none';
+        }
+
+        let resetCode = '';
+
+        function sendResetCode() {
+            const login = document.getElementById('forgotLoginInput').value;
+            const errorMessage = document.getElementById('forgotError');
+            const storedCredentials = JSON.parse(localStorage.getItem('adminCredentials')) || { login: 'aternia', password: '9293Kdgj*4klgsl' };
+
+            if (login !== storedCredentials.login) {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Неверный логин!';
+                return;
+            }
+
+            // Генерируем случайный 6-значный код
+            resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+            localStorage.setItem('resetCode', resetCode);
+
+            // Отправляем код на почту через EmailJS
+            emailjs.send('biographybyhernec', 'template_xojdlqs', {
+                code: resetCode,
+                to_email: 'matv4554@gmail.com'
+            })
+            .then(function(response) {
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'block';
+            }, function(error) {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Ошибка при отправке кода. Попробуйте снова.';
+            });
+        }
+
+        function resetPassword() {
+            const code = document.getElementById('resetCodeInput').value;
+            const newPassword = document.getElementById('newPasswordInput').value;
+            const errorMessage = document.getElementById('resetError');
+            const storedCode = localStorage.getItem('resetCode');
+
+            if (code !== storedCode) {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Неверный код!';
+                return;
+            }
+
+            if (!newPassword) {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Введите новый пароль!';
+                return;
+            }
+
+            // Сохраняем новый пароль
+            const storedCredentials = JSON.parse(localStorage.getItem('adminCredentials')) || { login: 'aternia', password: '9293Kdgj*4klgsl' };
+            storedCredentials.password = newPassword;
+            localStorage.setItem('adminCredentials', JSON.stringify(storedCredentials));
+            localStorage.removeItem('resetCode');
+
+            // Закрываем модальное окно и показываем сообщение об успехе
+            alert('Пароль успешно изменён! Войдите с новым паролем.');
+            closeForgotPassword();
+        }
+
+        function loadProfileData() {
+            const profileData = JSON.parse(localStorage.getItem('profileData')) || {};
+            document.getElementById('titleInput').value = profileData.title || '';
+            document.getElementById('nameInput').value = profileData.name || '';
+            document.getElementById('descriptionInput').value = profileData.description || '';
+            document.getElementById('telegramLinkInput').value = profileData.telegramLink ? profileData.telegramLink.replace('https://', '') : '';
+            document.getElementById('backgroundColor').value = profileData.backgroundColor || '#1c2526';
+            document.getElementById('accentColor').value = profileData.accentColor || '#f39c12';
+            document.getElementById('textColor').value = profileData.textColor || '#ffffff';
+            document.getElementById('borderColor').value = profileData.borderColor || '#ffffff';
+            document.getElementById('mediaPlayerBgColor').value = profileData.mediaPlayerBgColor || '#4834d4';
+            document.getElementById('mediaPlayerBtnColor').value = profileData.mediaPlayerBtnColor || '#6c5ce7';
+            document.getElementById('progressBarColor').value = profileData.progressBarColor || '#e84118';
+            document.getElementById('profileOpacity').value = profileData.opacity || '100';
+            document.getElementById('profileBlur').value = profileData.blur || '0';
+            document.getElementById('monochromeIcons').checked = profileData.monochromeIcons || false;
+            document.getElementById('animatedTitle').checked = profileData.animatedTitle || false;
+            document.getElementById('enableParticles').checked = profileData.enableParticles || false;
+            document.getElementById('particleType').value = profileData.particleType || 'snowflakes';
+        }
+    </script>
+</body>
+</html>
